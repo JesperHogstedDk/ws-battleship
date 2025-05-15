@@ -2,16 +2,20 @@
 > Static http server and base task packages. 
 > By default WebSocket client tries to connect to the 3000 port.
 
+## Requirement
+Should run using Node v.23.11.1, which allows node to [execute TypeScript natively](https://nodejs.org/en/learn/typescript/run-natively) allready from [22.6.0](https://nodejs.org/api/typescript.html#type-stripping). 
+
 ## Installation
-1. Clone/download repo
-2. `npm install`
+1. Git clone repo: https://github.com/JesperHogstedDk/ws-battleship
+2. Run `npm install`
+3. Until pull request has been merged use the development branch
 
 ## Usage
 **Development**
 
 `npm run start:dev`
 
-* App served @ `http://localhost:8181` with nodemon
+* Battleship game app served @ `http://localhost:8181` with --watch flag
 
 **Production**
 
