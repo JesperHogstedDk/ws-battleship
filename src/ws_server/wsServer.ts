@@ -1,12 +1,11 @@
 import { WebSocket, WebSocketServer } from "ws";
-import { handleRegistration } from "./handlers/registration.js";
-import type { WSMessage } from "./types.ts";
-import { handleRoom } from "./handlers/room.js";
-import { handleWinners } from "./handlers/winners.js";
+import { handleRegistration } from "./handlers/player.js";
+import { handleUpdateRoom } from "./handlers/room.js";
+import { updateWinners } from "./handlers/winners.js";
+import type { User, WSMessage } from "../types/types.js"
 
-
-type user = {id:number, name:string};
-let users: user[] = [];
+export let users: User[] = [];
+let user: User;
 
 export function createWebSocketServer(port: number) {
   const wss = new WebSocketServer({ port });
@@ -16,31 +15,48 @@ export function createWebSocketServer(port: number) {
       let parsed: WSMessage;
       try {
         parsed = JSON.parse(message);
-
-        if (typeof parsed.data === "string" && parsed.data !== "") {
-          parsed.data = JSON.parse(parsed.data);
-        }
+        console.log('Parsed incoming message:', parsed);
       } catch {
-        ws.send(JSON.stringify({ type: "error", data: { errorText: "Invalid JSON" } }));
+        const errorData = { data: { error: true, errorText: "Invalid JSON" } };
+        console.log('WS: regError: ', errorData);
+        const regError: WSMessage = { type: "reg", data: JSON.stringify(errorData), id: 0 };
+        ws.send(JSON.stringify(regError));
         return;
       }
-      console.log('Parsed message:', parsed)
+      const foundUser: User | undefined = users.find(ix => ix.index === users.length-1);
+      console.log('foundUser: ', foundUser);
+      if (foundUser) {        
+        user = foundUser;
+      } else {
+        // console.log('foundUser: ', foundUser)
+      }
 
       switch (parsed.type) {
         case "reg":
-          if (parsed.data && parsed.data.name) {
-            const user = parsed.data.name;
-            users.push({ id: 1, name: user })
+          if (typeof parsed.data === "string" && parsed.data !== "" ) {            
+            const newUser: User = JSON.parse(parsed.data);
+            console.log('newUser: ', newUser)
+            user = { index: users.length, name: newUser.name, password: newUser.password };
+            if(foundUser !== user){
+            console.log('Adding user: ', user);
+            users.push(user)
+            }
           }
+          console.log('user: ', user);
           console.log('users: ', users);
-          handleRegistration(ws, parsed);
-          handleWinners(ws, parsed);
+          handleRegistration(ws, user);
+          // handleUpdateRoom(ws, parsed, user.name);
+          // updateWinners(ws, parsed, user.name);
           break;
         case "create_room":
-          const foundUser = users.find(ix => ix.id === 1);
+          // foundUser = users.find(ix => ix.index === users.length);
           const userName = foundUser ? foundUser.name : "Unknown";
           console.log('users: ', users, userName);
-          handleRoom(ws, parsed, userName)
+          handleUpdateRoom(ws, parsed, userName);
+          break;
+        case "add_user_to_room":
+          ;
+          break;
         default:
           console.log('Received Unknown type: ', parsed)
           ws.send(JSON.stringify({ type: "error", data: { errorText: "Unknown type" } }));

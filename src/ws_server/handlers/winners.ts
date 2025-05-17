@@ -1,7 +1,7 @@
 import { WebSocket } from "ws";
-import { WSMessage } from "../types.js";
+import { WSMessage } from "../../types/types.js";
 
-export const handleWinners = (ws: WebSocket, parsed: WSMessage, name: string = '', wins: number = 0) => {
+export const updateWinners = (ws: WebSocket, parsed: WSMessage, name: string = '', wins: number = 0) => {
     const updateWinnersData = [
         {
             name: name,
