@@ -1,31 +1,42 @@
 import type { WebSocket } from "ws";
-import { WSMessage } from "../../types/types.js";
+import { ClientSession, Room } from "../../types/types.js";
 
-export const handleUpdateRoom = (ws: WebSocket, msg: WSMessage, name: string = '') => {
-    const getRoomIndex = 1;
-    if (msg.data === '') {
-        const updateRoomData = [
-            {
-                roomId: 0,
-                roomUsers:
-                    [
+export const updateRoom = (ws: WebSocket, rooms: Room[], clients: ClientSession[]) => {
+    const roomsWithOneUser: [] = [];
+    if (rooms.length > 0) {
+        rooms.forEach(room => {
+            console.log('room: ', room);
+            if (room.roomUsers.length === 1) {
+                room.roomUsers.forEach(user => {
+                    const updateRoomData = [
                         {
-                            name: `${name}'s room!`,
-                            index: getRoomIndex,
-                        }
-                    ],
-            },
-        ];
+                            roomId: room.roomId,
+                            roomUsers:
+                                [
+                                    {
+                                        name: `${user.name}'s room! at index ${user.index}`,
+                                        index: user.index,
+                                    }
+                                ],
+                        },
+                    ];
+                    // roomsWithOneUser.push(updateRoomData)
+                    clients.forEach(client => {
+                        const updateRoom = JSON.stringify({ id: 0, type: 'update_room', data: JSON.stringify(updateRoomData) });
+                        console.log('updateRoom: ', updateRoom);
+                        client.ws.send(updateRoom);
+                    });
 
-        const updateRoom = JSON.stringify({ id: 0, type: 'update_room', data: JSON.stringify(updateRoomData) });
-        console.log('updateRoom: ', updateRoom);
-        ws.send(updateRoom);
+                });
+
+            }
+        });
     } else {
-        console.log('update_room: ', 'Invalid update room data')
-        ws.send(JSON.stringify({
-            type: "update_room",
-            data: JSON.stringify({ name: "", index: "", error: true, errorText: "Invalid update room data" }),
-            id: 0,
-        }));
+        clients.forEach(client => {
+            const updateRoom = JSON.stringify({ id: 0, type: 'update_room', data: JSON.stringify([]) });
+            console.log('updateRoom: ', updateRoom);
+            client.ws.send(updateRoom);
+        });
+
     }
 }
