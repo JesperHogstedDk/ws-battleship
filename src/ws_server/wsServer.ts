@@ -1,9 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { WebSocket, WebSocketServer } from "ws";
 import type { ClientSession, Room, User, WSMessage } from "../types/types.js";
-import { createGame } from "./handlers/game.js";
+import { attack, createGame, turn } from "./handlers/game.js";
 import { register } from "./handlers/player.js";
 import { updateRoom } from "./handlers/room.js";
+import { startGame } from "./handlers/Ship.js";
 import { updateWinners } from "./handlers/winners.js";
 
 // let user: User;
@@ -28,7 +29,6 @@ export function createWebSocketServer(port: number) {
         case "reg":
           const newUser: User = parsed.data;
           if (newUser) {
-            // console.log('newUser: ', newUser)
             const existUser = clients.find(us => us.user?.name === newUser.name)?.user;
             if (existUser) {
               const errorData = { name: "", index: "", error: true, errorText: `User ${newUser.name} allready registered!` };
@@ -37,14 +37,9 @@ export function createWebSocketServer(port: number) {
               ws.send(JSON.stringify(reg));
               return;
             } else {
-              // newUser.index = users.length;
-              // newUser.index = clients.length-1;
-              // console.log('Adding user: ', newUser);
-              // users.push(newUser);
               if (client) {
                 client.user = newUser;
               }
-              // console.log('Ws sessions new user: ', clients[clients.length-1].user)
             }
           }
           register(ws, client?.user);
@@ -77,9 +72,9 @@ export function createWebSocketServer(port: number) {
           if (parsed.data) {
             const myRoom = rooms.find(room => room.roomId === client?.roomId);
             const foundRoom = rooms.find(room => room.roomId === parsed.data.indexRoom);
-            const idPlayer1 = client?.user?.name || 'idPlayer1';
-            const idPlayer2 = foundRoom?.roomUsers[0].name || 'idPlayer2';
-            const wsIdPlayer2 = clients.find(c => c.user?.name === idPlayer2)?.ws;
+            const player1 = client?.user?.name || 'idPlayer1';
+            const player2 = foundRoom?.roomUsers[0].name || 'idPlayer2';
+            const wsForPlayer2 = clients.find(c => c.user?.name === player2)?.ws;
 
             if (foundRoom) {
               // remove foundRoom and possible myRoom
@@ -89,9 +84,9 @@ export function createWebSocketServer(port: number) {
               if (inxMyRoom !== -1) rooms.splice(inx, 1);
 
               const idGame = randomUUID();
-              createGame(ws, idGame, idPlayer1);
-              if (wsIdPlayer2) {
-                createGame(wsIdPlayer2, idGame, idPlayer2);
+              createGame(ws, idGame, player1);
+              if (wsForPlayer2) {
+                createGame(wsForPlayer2, idGame, player2);
               }
 
             } else {
@@ -112,10 +107,41 @@ export function createWebSocketServer(port: number) {
           updateWinners(ws);
           break; // add_user_to_room
 
-        case "add_ships":
-          if (parsed.data) {
+        case "add_ships":          
+          if (client?.user?.name) {
+            const player = parsed.data.indexPlayer;
+            const currentUser = client.user.name;
+            if (player === currentUser) {
+              startGame(ws, parsed.data, player);
+              turn(ws, player);
+            }
           }
           break;
+
+        case "attack":          
+          if (client?.user?.name) {
+            const player = parsed.data.indexPlayer;
+            const currentUser = client.user.name;
+            if (player !== currentUser) {
+              attack(ws, parsed.data, player);
+              turn(ws, player);
+            }
+          }
+          break;
+
+          case "randomAttack":
+          if (client?.user?.name) {
+            const player = parsed.data.indexPlayer;
+            const currentUser = client.user.name;
+            const gameId = parsed.data.gameId;
+            if (player !== currentUser) {
+              attack(ws, parsed.data, player);
+              turn(ws, player);
+            }
+          }
+
+          break;
+
         default:
           console.log('Received Unknown type: ', parsed);
           ws.send(JSON.stringify({ type: "error", data: { errorText: "Unknown type" } }));
@@ -143,11 +169,9 @@ function parseIncomingMessage(ws: WebSocket, message: string): WSMessage | undef
   let parsed: WSMessage;
   try {
     parsed = JSON.parse(message);
-    // console.log('Parsed incoming message:', parsed);
     if (typeof parsed.data === "string" && parsed.data !== "") {
       parsed.data = JSON.parse(parsed.data);
     }
-    // console.log('Parsed data:', parsed);
     console.log('Parsed incoming message:', parsed);
     return parsed;
   } catch {

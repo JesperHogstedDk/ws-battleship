@@ -1,5 +1,4 @@
 import { WebSocket } from "ws";
-import { WSMessage } from "../../types/types.js";
 
 export const updateWinners = (ws: WebSocket, name: string = '', wins: number = 0) => {
     let updateWinnersData = [
@@ -11,8 +10,5 @@ export const updateWinners = (ws: WebSocket, name: string = '', wins: number = 0
     ];
     updateWinnersData=[];
     const updateWinners = JSON.stringify({ id: 0, type: 'update_winners', data: JSON.stringify(updateWinnersData) });
-
-
     ws.send(updateWinners);
-
 }
