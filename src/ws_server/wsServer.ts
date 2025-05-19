@@ -1,15 +1,15 @@
+import { randomUUID } from "node:crypto";
 import { WebSocket, WebSocketServer } from "ws";
+import type { ClientSession, Room, User, WSMessage } from "../types/types.js";
+import { createGame } from "./handlers/game.js";
 import { register } from "./handlers/player.js";
 import { updateRoom } from "./handlers/room.js";
 import { updateWinners } from "./handlers/winners.js";
-import type { Room, User, WSMessage, ClientSession } from "../types/types.js"
-import { createGame } from "./handlers/game.js";
 
 // let user: User;
 // let users: User[] = [];
 let room: Room;
 let rooms: Room[] = [];
-// let client: ClientSession;
 const clients: ClientSession[] = [];
 
 export function createWebSocketServer(port: number) {
@@ -17,6 +17,7 @@ export function createWebSocketServer(port: number) {
 
   wss.on("connection", (ws: WebSocket) => {
     clients.push({ ws });
+    console.log('Ws sessions: ', clients.length)
 
     ws.on("message", (message: string) => {
       const client = clients.find(c => c.ws === ws);
@@ -37,12 +38,13 @@ export function createWebSocketServer(port: number) {
               return;
             } else {
               // newUser.index = users.length;
-              newUser.index = clients.length;
+              // newUser.index = clients.length-1;
               // console.log('Adding user: ', newUser);
               // users.push(newUser);
               if (client) {
                 client.user = newUser;
               }
+              // console.log('Ws sessions new user: ', clients[clients.length-1].user)
             }
           }
           register(ws, client?.user);
@@ -53,65 +55,62 @@ export function createWebSocketServer(port: number) {
         case "create_room":
           if (!parsed.data) {
             const myRoom = rooms.find(room => room.roomId === client?.roomId);
-            // console.log('myRoom: ', myRoom);
             if (!myRoom) {
-              if (client?.user?.name && client?.user?.index !== undefined) {
-                let roomUsers: { name: string; index: string | number; }[] = [];
-                const roomUser = { index: client.user.index, name: client.user.name };
+              if (client?.user?.name /*&& client?.user?.index !== undefined*/) {
+                let roomUsers: { name: string; /*index: string | number;*/ }[] = [];
+                const roomUser = { /*index: client.user.index,*/ name: client.user.name };
                 roomUsers.push(roomUser);
                 client.roomId = rooms.length;
                 room = { roomId: client.roomId, roomUsers: roomUsers };
-                // console.log('Adding room: ', room);
                 const roomId = rooms.push(room);
-                // console.log('rooms: ', rooms);
                 console.log('client user, roomId: ', client.user, client.roomId);
               } else {
                 console.error('User name or index is undefined, cannot create roomUser');
               }
             }
           }
-          console.log('rooms: ', JSON.stringify(rooms))
           updateRoom(ws, rooms, clients);
           updateWinners(ws);
           break;
 
         case "add_user_to_room":
-          // console.log(`Add user ${client?.user?.name} to some room where user is not allready!`)
-
           if (parsed.data) {
-            // const myRoom = rooms.find(room => room.roomId === client?.roomId);
+            const myRoom = rooms.find(room => room.roomId === client?.roomId);
             const foundRoom = rooms.find(room => room.roomId === parsed.data.indexRoom);
+            const idPlayer1 = client?.user?.name || 'idPlayer1';
+            const idPlayer2 = foundRoom?.roomUsers[0].name || 'idPlayer2';
+            const wsIdPlayer2 = clients.find(c => c.user?.name === idPlayer2)?.ws;
+
             if (foundRoom) {
-              console.log('foundRoom: ', foundRoom);
-              // console.log('myRoom: ', myRoom);
-              // remove foundRoom 
+              // remove foundRoom and possible myRoom
               const inx = rooms.findIndex(room => room.roomId === foundRoom?.roomId);
               if (inx !== -1) rooms.splice(inx, 1);
-              // create_game
-              createGame(ws, clients, parsed.data.indexRoom, foundRoom.roomId !== undefined ? foundRoom.roomId : 11);
+              const inxMyRoom = rooms.findIndex(room => room.roomId === myRoom?.roomId);
+              if (inxMyRoom !== -1) rooms.splice(inx, 1);
+
+              const idGame = randomUUID();
+              createGame(ws, idGame, idPlayer1);
+              if (wsIdPlayer2) {
+                createGame(wsIdPlayer2, idGame, idPlayer2);
+              }
 
             } else {
-              // console.log('Adding user to: ', foundRoom);              
-              if (client?.user?.name && client?.user?.index !== undefined) {
-                // const roomUsers = foundRoom
-                let roomUsers: { name: string; index: string | number; }[] = [];
-                const roomUser = { index: client.user.index, name: client.user.name };
+              if (client?.user?.name /*&& client?.user?.index !== undefined*/) {
+                let roomUsers: { name: string; /*index: string | number;*/ }[] = [];
+                const roomUser = { /*index: client.user.index,*/ name: client.user.name };
                 roomUsers.push(roomUser);
-                console.log('roomUsers: ', roomUsers);
-                room = { roomId: client.roomId, roomUsers: roomUsers };
-                console.log('Adding room: ', room)
+                if (client.roomId) {
+                  room = { roomId: client.roomId, roomUsers: roomUsers };
+                }
                 rooms.push(room);
               } else {
                 console.error('User name or index is undefined, cannot create roomUser');
               }
-              // console.log('Add user to room: ', client?.user)
             }
           }
-          console.log('rooms: ', JSON.stringify(rooms))
           updateRoom(ws, rooms, clients);
           updateWinners(ws);
-          // startGame();
-          break;
+          break; // add_user_to_room
 
         case "add_ships":
           if (parsed.data) {

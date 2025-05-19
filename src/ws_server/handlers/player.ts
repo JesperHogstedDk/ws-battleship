@@ -5,7 +5,7 @@ export const register = (ws: WebSocket, user: User | undefined) => {
   if (user) {
     const regData = {
       name: user.name,
-      index: user.index,
+      // index: user.index,
       error: false,
       errorText: '',
     };

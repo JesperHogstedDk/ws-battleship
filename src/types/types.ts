@@ -1,7 +1,7 @@
 import type { WebSocket as WsWebSocket } from "ws";
 
 export type User = {
-    index: number,
+    // index: number,
     name: string,
     password: string
 };
@@ -13,11 +13,11 @@ export type WSMessage = {
 }
 
 export type Room = {
-    roomId: number | string | undefined,
+    roomId: number | string ,
     roomUsers:
     {
         name: string,
-        index: number | string,
+        // index: number | string,
     }[],
 };
 
