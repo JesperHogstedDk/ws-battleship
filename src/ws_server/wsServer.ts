@@ -12,6 +12,8 @@ import { updateWinners } from "./handlers/winners.js";
 let room: Room;
 let rooms: Room[] = [];
 const clients: ClientSession[] = [];
+let player1: string = '';
+let player2: string = '';
 
 export function createWebSocketServer(port: number) {
   const wss = new WebSocketServer({ port });
@@ -72,8 +74,8 @@ export function createWebSocketServer(port: number) {
           if (parsed.data) {
             const myRoom = rooms.find(room => room.roomId === client?.roomId);
             const foundRoom = rooms.find(room => room.roomId === parsed.data.indexRoom);
-            const player1 = client?.user?.name || 'idPlayer1';
-            const player2 = foundRoom?.roomUsers[0].name || 'idPlayer2';
+            player1 = client?.user?.name || 'idPlayer1';
+            player2 = foundRoom?.roomUsers[0].name || 'idPlayer2';
             const wsForPlayer2 = clients.find(c => c.user?.name === player2)?.ws;
 
             if (foundRoom) {
@@ -107,38 +109,37 @@ export function createWebSocketServer(port: number) {
           updateWinners(ws);
           break; // add_user_to_room
 
-        case "add_ships":          
-          if (client?.user?.name) {
-            const player = parsed.data.indexPlayer;
-            const currentUser = client.user.name;
-            if (player === currentUser) {
-              startGame(ws, parsed.data, player);
-              turn(ws, player);
-            }
-          }
+        case "add_ships":
+          // if (client?.user?.name) {
+            // const player = parsed.data.indexPlayer;
+            // const currentUser = client.user.name;
+            // if (player === currentUser) {
+              startGame(ws, parsed.data, parsed.data.indexPlayer);
+              turn(ws, parsed.data.indexPlayer);
+            // }
+          // }
           break;
 
-        case "attack":          
-          if (client?.user?.name) {
+        case "attack":
+          // if (client?.user?.name) {
             const player = parsed.data.indexPlayer;
-            const currentUser = client.user.name;
-            if (player !== currentUser) {
+            // const currentUser = client.user.name;
+            // if (player !== currentUser) {
               attack(ws, parsed.data, player);
               turn(ws, player);
-            }
-          }
+            // }
+          // }
           break;
 
-          case "randomAttack":
-          if (client?.user?.name) {
-            const player = parsed.data.indexPlayer;
-            const currentUser = client.user.name;
+        case "randomAttack":
+          // if (client?.user?.name) {
+            // const player = parsed.data.indexPlayer;
+            // const currentUser = client.user.name;
             const gameId = parsed.data.gameId;
-            if (player !== currentUser) {
-              attack(ws, parsed.data, player);
-              turn(ws, player);
-            }
-          }
+            // if (player !== currentUser) {
+            attack(ws, parsed.data, parsed.data.indexPlayer);
+            turn(ws, parsed.data.indexPlayer);
+          // }
 
           break;
 

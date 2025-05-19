@@ -31,7 +31,7 @@ export const attack = (ws: WebSocket, data: AttackIn, curentPlayer: string | num
     const attackData: AttackFeedback = {
         position: { x: data.x, y: data.y },
         currentPlayer: data.indexPlayer,
-        status: "miss",
+        status: "shot",
     }
 
     const attack: WSMessage = {
