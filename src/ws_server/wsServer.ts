@@ -4,7 +4,7 @@ import type { ClientSession, Room, User, WSMessage } from "../types/types.js";
 import { attack, createGame, turn } from "./handlers/game.js";
 import { register } from "./handlers/player.js";
 import { updateRoom } from "./handlers/room.js";
-import { startGame } from "./handlers/Ship.js";
+import { startGame } from "./handlers/ship.js";
 import { updateWinners } from "./handlers/winners.js";
 
 // let user: User;
