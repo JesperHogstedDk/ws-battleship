@@ -6,6 +6,7 @@ import { register } from "./handlers/player.js";
 import { updateRoom } from "./handlers/room.js";
 import { startGame } from "./handlers/ship.js";
 import { updateWinners } from "./handlers/winners.js";
+import { Server } from "node:http";
 
 // let user: User;
 // let users: User[] = [];
@@ -15,8 +16,8 @@ const clients: ClientSession[] = [];
 let player1: string = '';
 let player2: string = '';
 
-export function createWebSocketServer(port: number) {
-  const wss = new WebSocketServer({ port });
+export function createWebSocketServer(httpServer: Server) {
+  const wss = new WebSocketServer({ server: httpServer });
 
   wss.on("connection", (ws: WebSocket) => {
     clients.push({ ws });
@@ -162,7 +163,7 @@ export function createWebSocketServer(port: number) {
   });
 
   wss.on("listening", () => {
-    console.log(`WebSocket server is listening on port ${port}`);
+    console.log(`WebSocket server is listening on same port as http server!`);
   });
 }
 

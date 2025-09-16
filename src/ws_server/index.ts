@@ -1,5 +1,6 @@
 import { createWebSocketServer } from "./wsServer.js";
+import { Server } from "node:http";
 
-export const startWebSockedServer = (WS_PORT: number) => {
-  createWebSocketServer(WS_PORT);
+export const startWebSockedServer = (httpServer: Server) => {
+  createWebSocketServer(httpServer);
 };
