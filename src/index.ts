@@ -6,18 +6,17 @@ dotenv.config();
 
 console.log("NODE_ENV: ", process.env.NODE_ENV);
 
-if (!process.env.HTTP_PORT || !process.env.WS_PORT) {
+if (!process.env.HTTP_WS_PORT ) {
     console.error(
         'Some environment variables is missing. Please define it in your .env file. Exiting...',
     );
     process.exit(1);
 }
 
-const HTTP_PORT = process.env.HTTP_PORT ;
-// const WS_PORT = Number(process.env.WS_PORT) ;
+const HTTP_WS_PORT = process.env.HTTP_WS_PORT ;
 
-console.log(`Start static http serve on the ${HTTP_PORT} port!`);
-httpServer.listen(HTTP_PORT);
+console.log(`Start static http serve on the ${HTTP_WS_PORT} port!`);
+httpServer.listen(HTTP_WS_PORT);
 
 console.log(`Starting ws server !`);
 startWebSockedServer(httpServer);

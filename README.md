@@ -15,13 +15,13 @@ Should run using Node v.23.11.1, which allows node to [execute TypeScript native
 
 `npm run start:dev`
 
-* Battleship game app served @ `http://localhost:8181` with --watch flag
+* Battleship game app served @ `http://localhost:10000` with --watch flag
 
 **Production**
 
 `npm run start`
 
-* App served @ `http://localhost:8181` without nodemon
+* App served @ `http://localhost:10000` without nodemon
 
 ---
 
@@ -29,10 +29,15 @@ Should run using Node v.23.11.1, which allows node to [execute TypeScript native
 
 Command | Description
 --- | ---
-`npm run start:dev` | App served @ `http://localhost:8181` with nodemon
-`npm run start` | App served @ `http://localhost:8181` without nodemon
+`npm run start:dev` | App served @ `http://localhost:10000` with nodemon
+`npm run start` | App served @ `http://localhost:10000` without nodemon
 
 **Note**: replace `npm` with `yarn` in `package.json` if you use yarn.
+
+## Deployment
+Javascript has hardcode url, that refers to localhost.  
+This url should be replaced when deployed to internet server like render.com.  
+Replace front/main.js with main render.com.js before deploying.
 
 ## Documentation
 [Native WebSocket Client in Node.js](https://nodejs.org/en/learn/getting-started/websocket)
